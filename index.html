@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Birim ve Personel Seçimi</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        text-align: center;
+        width: 80%;
+      }
+      select {
+        padding: 10px;
+        width: 100%;
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      #messageContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Birim ve Personel Bilgileri</h1>
+
+      <label for="birimSelect">Birim Seçiniz:</label>
+      <select id="birimSelect" onchange="getPersonelByBirim()">
+        <option value="">Birimi Seçiniz</option>
+      </select>
+
+      <div id="messageContainer">
+        <button id="uploadButton" onclick="loadExcel()" style="display: none">
+          Personel için Belge Yükle
+        </button>
+      </div>
+
+      <div id="personelContainer"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script>
+      const birimler = [
+        { id: 1, birim_adi: "Basın ve Halkla İlişkiler Şube Müdürlüğü" },
+        {
+          id: 2,
+          birim_adi: "Bilgi İşlem ve Eğitim Teknolojileri Şube Müdürlüğü",
+        },
+        { id: 3, birim_adi: "Destek Şube Müdürlüğü" },
+        { id: 4, birim_adi: "Din Öğretimi Şube Müdürlüğü" },
+        { id: 5, birim_adi: "Eğitim Müfettişleri Başkanlığı" },
+        { id: 6, birim_adi: "Enerji Yönetimi Birimi" },
+        { id: 7, birim_adi: "Hayat Boyu Öğrenme Şube Müdürlüğü" },
+        { id: 8, birim_adi: "Hukuk Şube Müdürlüğü" },
+        { id: 9, birim_adi: "İnsan Kaynakları Yönetimi Şube Müdürlüğü" },
+        { id: 10, birim_adi: "İnşaat ve Emlak Şube Müdürlüğü" },
+        { id: 11, birim_adi: "İş Yeri Sağlık ve Güvenlik Birimi" },
+        { id: 12, birim_adi: "Mesleki ve Teknik Eğitim Şube Müdürlüğü" },
+        { id: 13, birim_adi: "Ortaöğretim Şube Müdürlüğü" },
+        {
+          id: 14,
+          birim_adi: "Öğretmen Yetiştirme ve Geliştirme Şube Müdürlüğü",
+        },
+        { id: 15, birim_adi: "Ölçme, Değerlendirme ve Sınav Şube Müdürlüğü" },
+        { id: 16, birim_adi: "Özel Büro" },
+        { id: 17, birim_adi: "Özel Eğitim ve Rehberlik Şube Müdürlüğü" },
+        { id: 18, birim_adi: "Özel Öğretim Kurumları Şube Müdürlüğü" },
+        { id: 19, birim_adi: "Sivil Savunma Hizmetleri" },
+        { id: 20, birim_adi: "Strateji Geliştirme Şube Müdürlüğü" },
+        { id: 21, birim_adi: "Temel Eğitim Şube Müdürlüğü" },
+        {
+          id: 22,
+          birim_adi: "Yüksek Öğretim ve Yurtdışı Eğitim Şube Müdürlüğü",
+        },
+      ];
+
+      let personeller = [];
+
+      window.onload = function () {
+        const birimSelect = document.getElementById("birimSelect");
+        birimler.forEach((birim) => {
+          const option = document.createElement("option");
+          option.value = birim.id;
+          option.textContent = birim.birim_adi;
+          birimSelect.appendChild(option);
+        });
+      };
+
+      function loadExcel() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".xlsx, .xls, .ods";
+
+        input.onchange = (event) => {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            personeller = XLSX.utils.sheet_to_json(worksheet);
+
+            document.getElementById("uploadButton").style.display = "none";
+          };
+          reader.readAsArrayBuffer(file);
+        };
+
+        input.click();
+      }
+
+      function getPersonelByBirim() {
+        const selectedBirimId = document.getElementById("birimSelect").value;
+        const personelContainer = document.getElementById("personelContainer");
+        personelContainer.innerHTML = "";
+
+        if (selectedBirimId) {
+          const filteredPersoneller = personeller.filter(
+            (personel) => personel.birim_id == selectedBirimId
+          );
+
+          if (filteredPersoneller.length > 0) {
+            let table =
+              "<table><tr><th>Ad</th><th>Unvan</th><th>Telefon</th></tr>";
+            filteredPersoneller.forEach((personel) => {
+              table += `<tr><td>${personel.ad}</td><td>${personel.unvan}</td><td>${personel.tel}</td></tr>`;
+            });
+            table += "</table>";
+            personelContainer.innerHTML = table;
+
+            document.getElementById("uploadButton").style.display = "none";
+          } else {
+            personelContainer.innerHTML = "";
+            document.getElementById("uploadButton").style.display = "block";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
