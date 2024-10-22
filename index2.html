@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Birim ve Personel Seçimi</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: auto;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        text-align: center;
+        width: 80%;
+        margin-top: 20px;
+      }
+      select {
+        padding: 10px;
+        width: 100%;
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        max-height: 800px;
+        overflow-y: auto;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      #messageContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Birim ve Personel Bilgileri</h1>
+
+      <label for="birimSelect">Birim Seçiniz:</label>
+      <select id="birimSelect" onchange="getPersonelByBirim()">
+        <option value="">Birimi Seçiniz</option>
+      </select>
+
+      <div id="personelContainer"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script>
+      const birimler = [
+        { id: 1, birim_adi: "Basın ve Halkla İlişkiler Şube Müdürlüğü" },
+        {
+          id: 2,
+          birim_adi: "Bilgi İşlem ve Eğitim Teknolojileri Şube Müdürlüğü",
+        },
+        { id: 3, birim_adi: "Destek Şube Müdürlüğü" },
+        { id: 4, birim_adi: "Din Öğretimi Şube Müdürlüğü" },
+        { id: 5, birim_adi: "Eğitim Müfettişleri Başkanlığı" },
+        { id: 6, birim_adi: "Enerji Yönetimi Birimi" },
+        { id: 7, birim_adi: "Hayat Boyu Öğrenme Şube Müdürlüğü" },
+        { id: 8, birim_adi: "Hukuk Şube Müdürlüğü" },
+        { id: 9, birim_adi: "İnsan Kaynakları Yönetimi Şube Müdürlüğü" },
+        { id: 10, birim_adi: "İnşaat ve Emlak Şube Müdürlüğü" },
+        { id: 11, birim_adi: "İş Yeri Sağlık ve Güvenlik Birimi" },
+        { id: 12, birim_adi: "Mesleki ve Teknik Eğitim Şube Müdürlüğü" },
+        { id: 13, birim_adi: "Ortaöğretim Şube Müdürlüğü" },
+        {
+          id: 14,
+          birim_adi: "Öğretmen Yetiştirme ve Geliştirme Şube Müdürlüğü",
+        },
+        { id: 15, birim_adi: "Ölçme, Değerlendirme ve Sınav Şube Müdürlüğü" },
+        { id: 16, birim_adi: "Özel Büro" },
+        { id: 17, birim_adi: "Özel Eğitim ve Rehberlik Şube Müdürlüğü" },
+        { id: 18, birim_adi: "Özel Öğretim Kurumları Şube Müdürlüğü" },
+        { id: 19, birim_adi: "Sivil Savunma Hizmetleri" },
+        { id: 20, birim_adi: "Strateji Geliştirme Şube Müdürlüğü" },
+        { id: 21, birim_adi: "Temel Eğitim Şube Müdürlüğü" },
+        {
+          id: 22,
+          birim_adi: "Yüksek Öğretim ve Yurtdışı Eğitim Şube Müdürlüğü",
+        },
+      ];
+
+      // Personel verileri
+      const personeller = [
+        {
+          p_id: 1,
+          ad: "A***** A*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 09",
+          birim_id: 16,
+        },
+        {
+          p_id: 2,
+          ad: "N***** D***** Ç*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 08",
+          birim_id: 16,
+        },
+        {
+          p_id: 3,
+          ad: "M***** T*****",
+          unvan: "PROGRAMCI",
+          tel: "0276 280 64 07",
+          birim_id: 16,
+        },
+        {
+          p_id: 4,
+          ad: "İ***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 05",
+          birim_id: 16,
+        },
+        {
+          p_id: 5,
+          ad: "Ş***** A*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 00",
+          birim_id: 16,
+        },
+        {
+          p_id: 6,
+          ad: "M***** Y*****",
+          unvan: "MAKAM ŞOFÖRÜ",
+          tel: "0276 280 64 06",
+          birim_id: 16,
+        },
+        {
+          p_id: 7,
+          ad: "M***** B*****",
+          unvan: "HİZMETLİ",
+          tel: "0276 280 64 06",
+          birim_id: 16,
+        },
+        {
+          p_id: 8,
+          ad: "H***** K*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 1,
+        },
+        {
+          p_id: 9,
+          ad: "H***** A*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 23",
+          birim_id: 1,
+        },
+        {
+          p_id: 10,
+          ad: "M***** P*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 47",
+          birim_id: 1,
+        },
+        {
+          p_id: 11,
+          ad: "A***** G*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 45",
+          birim_id: 1,
+        },
+        {
+          id: 12,
+          ad: "M***** K*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 64 45",
+          birim_id: 1,
+        },
+        {
+          id: 13,
+          ad: "Y***** C*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 33",
+          birim_id: 1,
+        },
+        {
+          id: 14,
+          ad: "H***** Ö*****",
+          unvan: "SÜREKLİ İŞÇİ",
+          tel: "0276 280 64 47",
+          birim_id: 1,
+        },
+        {
+          id: 15,
+          ad: "M***** A*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 2,
+        },
+        {
+          id: 16,
+          ad: "F***** N*****",
+          unvan: "MEBBİS YÖNETİCİSİ",
+          tel: "0276 280 64 11",
+          birim_id: 2,
+        },
+        {
+          id: 17,
+          ad: "R***** C*****",
+          unvan: "MEBBİS YÖNETİCİSİ",
+          tel: "0276 280 64 10",
+          birim_id: 2,
+        },
+        {
+          id: 18,
+          ad: "Y***** S*****",
+          unvan: "EBYS YÖNETİCİSİ",
+          tel: "0276 280 64 35",
+          birim_id: 2,
+        },
+        {
+          id: 19,
+          ad: "S***** Y*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 3,
+        },
+        {
+          id: 20,
+          ad: "A***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 44",
+          birim_id: 3,
+        },
+        {
+          id: 21,
+          ad: "U***** D*****",
+          unvan: "HİZMETLİ",
+          tel: "0276 280 64 44",
+          birim_id: 3,
+        },
+        {
+          id: 22,
+          ad: "F***** T*****",
+          unvan: "GEÇİCİ İŞÇİ (696 KHK)",
+          tel: "0276 280 64 61",
+          birim_id: 3,
+        },
+        {
+          id: 23,
+          ad: "H***** D*****",
+          unvan: "GEÇİCİ İŞÇİ (696 KHK)",
+          tel: "0276 280 64 61",
+          birim_id: 3,
+        },
+        {
+          id: 24,
+          ad: "H***** K*****",
+          unvan: "GEÇİCİ İŞÇİ (696 KHK)",
+          tel: "0276 280 64 62",
+          birim_id: 3,
+        },
+        {
+          id: 25,
+          ad: "N***** T*****",
+          unvan: "GEÇİCİ İŞÇİ (696 KHK)",
+          tel: "0276 280 64 62",
+          birim_id: 3,
+        },
+        {
+          id: 26,
+          ad: "T***** Ö*****",
+          unvan: "GEÇİCİ İŞÇİ (696 KHK)",
+          tel: "0276 280 64 62",
+          birim_id: 3,
+        },
+        {
+          id: 27,
+          ad: "B***** Z*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 38",
+          birim_id: 3,
+        },
+        {
+          id: 28,
+          ad: "R***** Ş***** Ö*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 46",
+          birim_id: 3,
+        },
+        {
+          id: 29,
+          ad: "Z***** Y*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 37",
+          birim_id: 3,
+        },
+        { id: 30, ad: "O***** U*****", unvan: "SAYMAN", tel: "", birim_id: 3 },
+        {
+          p_id: 31,
+          ad: "B***** A*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 41",
+          birim_id: 3,
+        },
+        {
+          p_id: 32,
+          ad: "F***** K*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 64 42",
+          birim_id: 3,
+        },
+        {
+          p_id: 33,
+          ad: "H***** Ş*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 43",
+          birim_id: 3,
+        },
+        {
+          p_id: 34,
+          ad: "İ***** A*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 42",
+          birim_id: 3,
+        },
+        {
+          p_id: 35,
+          ad: "A***** B*****",
+          unvan: "HİZMETLİ (GECE BEKÇİSİ)",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 36,
+          ad: "M***** E*****",
+          unvan: "HİZMETLİ (GECE BEKÇİSİ)",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 37,
+          ad: "Y***** G*****",
+          unvan: "HİZMETLİ (GECE BEKÇİSİ)",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 38,
+          ad: "M***** P*****",
+          unvan: "HİZMETLİ (GECE BEKÇİSİ)",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 39,
+          ad: "D***** A*****",
+          unvan: "GÜVENLİK",
+          tel: "0276 280 64 61",
+          birim_id: 3,
+        },
+        {
+          p_id: 40,
+          ad: "M***** A*****",
+          unvan: "TEKNİKER",
+          tel: "0276 280 64 48",
+          birim_id: 3,
+        },
+        {
+          p_id: 41,
+          ad: "U***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 49",
+          birim_id: 3,
+        },
+        {
+          p_id: 42,
+          ad: "A***** Y*****",
+          unvan: "SÜREKLİ İŞÇİ",
+          tel: "0276 280 64 49",
+          birim_id: 3,
+        },
+        {
+          p_id: 43,
+          ad: "N***** K*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 40",
+          birim_id: 3,
+        },
+        {
+          p_id: 44,
+          ad: "S***** Y*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 3,
+        },
+        {
+          p_id: 45,
+          ad: "S***** U*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 37",
+          birim_id: 3,
+        },
+        {
+          p_id: 46,
+          ad: "H***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 37",
+          birim_id: 3,
+        },
+        {
+          p_id: 47,
+          ad: "K***** Ö*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 43",
+          birim_id: 3,
+        },
+        {
+          p_id: 48,
+          ad: "İ***** G*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 39",
+          birim_id: 3,
+        },
+        {
+          p_id: 49,
+          ad: "G***** S*****",
+          unvan: "MEMUR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 50,
+          ad: "K***** K*****",
+          unvan: "BAŞŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 51,
+          ad: "M***** B*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 52,
+          ad: "O***** T*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 53,
+          ad: "O***** Ö*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 54,
+          ad: "Ö***** T*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 55,
+          ad: "T***** Ü*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 56,
+          ad: "Z***** K*****",
+          unvan: "ŞOFÖR",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 57,
+          ad: "A***** T*****",
+          unvan: "HİZMETLİ",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 58,
+          ad: "B***** A*****",
+          unvan: "HİZMETLİ",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 59,
+          ad: "C***** D*****",
+          unvan: "HİZMETLİ",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 60,
+          ad: "S***** K*****",
+          unvan: "HİZMETLİ",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 61,
+          ad: "T***** D*****",
+          unvan: "HİZMETLİ",
+          tel: "",
+          birim_id: 3,
+        },
+        {
+          p_id: 62,
+          ad: "S***** Y*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 3,
+        },
+        {
+          p_id: 63,
+          ad: "B***** A***** E*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 54",
+          birim_id: 3,
+        },
+        {
+          p_id: 64,
+          ad: "M***** K*****",
+          unvan: "TEKNİKER",
+          tel: "0276 280 64 55",
+          birim_id: 3,
+        },
+        {
+          p_id: 65,
+          ad: "T***** U*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 57",
+          birim_id: 3,
+        },
+        {
+          p_id: 66,
+          ad: "H***** G*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 58",
+          birim_id: 3,
+        },
+        {
+          p_id: 67,
+          ad: "E***** M***** B*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 54",
+          birim_id: 3,
+        },
+        {
+          p_id: 68,
+          ad: "A***** T*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 59",
+          birim_id: 3,
+        },
+        {
+          p_id: 69,
+          ad: "İ***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 56",
+          birim_id: 3,
+        },
+        {
+          p_id: 70,
+          ad: "Ö***** Ö*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 3,
+        },
+        {
+          p_id: 71,
+          ad: "O***** D*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 50",
+          birim_id: 3,
+        },
+        {
+          p_id: 72,
+          ad: "A***** Ş*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 53",
+          birim_id: 3,
+        },
+        {
+          p_id: 73,
+          ad: "B***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 39",
+          birim_id: 3,
+        },
+        {
+          p_id: 74,
+          ad: "T***** Ç*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 51",
+          birim_id: 3,
+        },
+        {
+          p_id: 75,
+          ad: "A***** A*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 4,
+        },
+        {
+          p_id: 76,
+          ad: "S***** T*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 64",
+          birim_id: 4,
+        },
+        {
+          p_id: 77,
+          ad: "F***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 64",
+          birim_id: 4,
+        },
+        {
+          p_id: 78,
+          ad: "Z***** Ç*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 13",
+          birim_id: 4,
+        },
+        {
+          p_id: 79,
+          ad: "G***** K*****",
+          unvan: "EĞİTİM MÜFETTİŞLERİ BAŞKANI",
+          tel: "0276 280 64 00",
+          birim_id: 5,
+        },
+        {
+          p_id: 80,
+          ad: "D***** C***** K*****",
+          unvan: "EĞİTİM MÜFETTİŞİ",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 81,
+          ad: "M***** Y*****",
+          unvan: "EĞİTİM MÜFETTİŞİ",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 82,
+          ad: "R***** B*****",
+          unvan: "EĞİTİM MÜFETTİŞİ",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 83,
+          ad: "S***** Y*****",
+          unvan: "EĞİTİM MÜFETTİŞİ",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 84,
+          ad: "E***** Y*****",
+          unvan: "EĞİTİM MÜFETTİŞ YARDIMCISI",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 85,
+          ad: "E***** K*****",
+          unvan: "EĞİTİM MÜFETTİŞ YARDIMCISI",
+          tel: "0276 280 64 91",
+          birim_id: 5,
+        },
+        {
+          p_id: 86,
+          ad: "E***** Y*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 92",
+          birim_id: 5,
+        },
+        {
+          p_id: 87,
+          ad: "F***** B*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 93",
+          birim_id: 5,
+        },
+        {
+          p_id: 88,
+          ad: "K***** S*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 95",
+          birim_id: 5,
+        },
+        {
+          p_id: 89,
+          ad: "S***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 94",
+          birim_id: 5,
+        },
+        {
+          p_id: 90,
+          ad: "A***** K*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 7,
+        },
+        {
+          p_id: 91,
+          ad: "A***** A*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 66",
+          birim_id: 7,
+        },
+        {
+          p_id: 92,
+          ad: "M***** U*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 67",
+          birim_id: 7,
+        },
+        {
+          p_id: 93,
+          ad: "S***** P***** C*****",
+          unvan: "AVUKAT",
+          tel: "0276 280 64 29",
+          birim_id: 8,
+        },
+        {
+          p_id: 94,
+          ad: "G***** A*****",
+          unvan: "AVUKAT",
+          tel: "0276 280 64 18",
+          birim_id: 8,
+        },
+        {
+          p_id: 95,
+          ad: "M***** K*****",
+          unvan: "AVUKAT",
+          tel: "0276 280 64 30",
+          birim_id: 8,
+        },
+        {
+          p_id: 96,
+          ad: "S***** K*****",
+          unvan: "AVUKAT",
+          tel: "0276 280 64 31",
+          birim_id: 8,
+        },
+        {
+          p_id: 97,
+          ad: "Z***** N***** T*****",
+          unvan: "AVUKAT",
+          tel: "0276 280 65 47",
+          birim_id: 8,
+        },
+        {
+          p_id: 98,
+          ad: "M***** K***** Ö*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 68",
+          birim_id: 8,
+        },
+        {
+          p_id: 99,
+          ad: "G***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 68",
+          birim_id: 8,
+        },
+        {
+          p_id: 100,
+          ad: "H***** B*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 69",
+          birim_id: 8,
+        },
+        {
+          p_id: 101,
+          ad: "Ö***** C*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 64 69",
+          birim_id: 8,
+        },
+        {
+          p_id: 102,
+          ad: "M***** Ş*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 9,
+        },
+        {
+          p_id: 103,
+          ad: "M***** K*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 70",
+          birim_id: 9,
+        },
+        {
+          p_id: 104,
+          ad: "A***** Ç*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 75",
+          birim_id: 9,
+        },
+        {
+          p_id: 105,
+          ad: "Y***** U*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 64 74",
+          birim_id: 9,
+        },
+        {
+          p_id: 106,
+          ad: "B***** A*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 74",
+          birim_id: 9,
+        },
+        {
+          p_id: 107,
+          ad: "E***** Y***** K*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 72",
+          birim_id: 9,
+        },
+        {
+          p_id: 108,
+          ad: "A***** C*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 64 71",
+          birim_id: 9,
+        },
+        {
+          p_id: 109,
+          ad: "S***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 73",
+          birim_id: 9,
+        },
+        {
+          p_id: 110,
+          ad: "M***** M***** T*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 46",
+          birim_id: 9,
+        },
+        {
+          p_id: 111,
+          ad: "M***** Ş*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 9,
+        },
+        {
+          p_id: 112,
+          ad: "A***** V***** U*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 76",
+          birim_id: 9,
+        },
+        {
+          p_id: 113,
+          ad: "H***** A*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 64 79",
+          birim_id: 9,
+        },
+        {
+          p_id: 114,
+          ad: "M***** K*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 64 77",
+          birim_id: 9,
+        },
+        {
+          p_id: 115,
+          ad: "T***** G*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 80",
+          birim_id: 9,
+        },
+        {
+          p_id: 116,
+          ad: "K***** Ü*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 17",
+          birim_id: 9,
+        },
+        {
+          p_id: 117,
+          ad: "A***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 06",
+          birim_id: 9,
+        },
+        {
+          p_id: 118,
+          ad: "B***** A*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 78",
+          birim_id: 9,
+        },
+        {
+          p_id: 119,
+          ad: "G***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 78",
+          birim_id: 9,
+        },
+        {
+          p_id: 120,
+          ad: "N***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 81",
+          birim_id: 9,
+        },
+        {
+          p_id: 121,
+          ad: "S***** Ş*****",
+          unvan: "TEKNİKER",
+          tel: "0276 280 64 81",
+          birim_id: 9,
+        },
+        {
+          p_id: 122,
+          ad: "Ö***** Ö*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 10,
+        },
+        {
+          p_id: 123,
+          ad: "A***** K*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 88",
+          birim_id: 10,
+        },
+        {
+          p_id: 124,
+          ad: "A***** T*****",
+          unvan: "MÜHENDİS",
+          tel: "0276 280 65 40",
+          birim_id: 10,
+        },
+        {
+          p_id: 125,
+          ad: "D***** A*****",
+          unvan: "MÜHENDİS",
+          tel: "0276 280 64 90",
+          birim_id: 10,
+        },
+        {
+          p_id: 126,
+          ad: "M***** Ç*****",
+          unvan: "TEKNİKER",
+          tel: "0276 280 65 40",
+          birim_id: 10,
+        },
+        {
+          p_id: 127,
+          ad: "S***** D***** A*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 90",
+          birim_id: 10,
+        },
+        {
+          p_id: 128,
+          ad: "S***** M*****",
+          unvan: "TEKNİKER",
+          tel: "0276 280 64 89",
+          birim_id: 10,
+        },
+        {
+          p_id: 129,
+          ad: "İ***** H*****",
+          unvan: "MÜDÜR YARDIMCISI",
+          tel: "0276 280 64 00",
+          birim_id: 11,
+        },
+        {
+          p_id: 130,
+          ad: "E***** N***** K*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 48",
+          birim_id: 11,
+        },
+        {
+          p_id: 131,
+          ad: "F***** Ü*****",
+          unvan: "İSG UZMANI",
+          tel: "0276 280 64 82",
+          birim_id: 11,
+        },
+        {
+          p_id: 132,
+          ad: "A***** T*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 44",
+          birim_id: 11,
+        },
+        {
+          p_id: 133,
+          ad: "E***** A*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 44",
+          birim_id: 11,
+        },
+        {
+          p_id: 134,
+          ad: "H***** B***** A*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 85",
+          birim_id: 11,
+        },
+        {
+          p_id: 135,
+          ad: "Y***** E*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 87",
+          birim_id: 11,
+        },
+        {
+          p_id: 136,
+          ad: "B***** T*****",
+          unvan: "DİYETİSYEN",
+          tel: "0276 280 64 84",
+          birim_id: 11,
+        },
+        {
+          p_id: 137,
+          ad: "S***** S*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 86",
+          birim_id: 11,
+        },
+        {
+          p_id: 138,
+          ad: "Ü***** G*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 84",
+          birim_id: 11,
+        },
+        {
+          p_id: 139,
+          ad: "Y***** E*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 86",
+          birim_id: 11,
+        },
+        {
+          p_id: 140,
+          ad: "Y***** D*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 83",
+          birim_id: 11,
+        },
+        {
+          p_id: 141,
+          ad: "M***** A*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 12,
+        },
+        {
+          p_id: 142,
+          ad: "H***** D*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 98",
+          birim_id: 12,
+        },
+        {
+          p_id: 143,
+          ad: "M***** Ç*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 97",
+          birim_id: 12,
+        },
+        {
+          p_id: 144,
+          ad: "L***** B*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 97",
+          birim_id: 12,
+        },
+        {
+          p_id: 145,
+          ad: "S***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 64 98",
+          birim_id: 12,
+        },
+        {
+          p_id: 146,
+          ad: "İ***** H*****",
+          unvan: "MÜDÜR YARDIMCISI",
+          tel: "0276 280 64 00",
+          birim_id: 13,
+        },
+        {
+          p_id: 147,
+          ad: "A***** Ş*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 99",
+          birim_id: 13,
+        },
+        {
+          p_id: 148,
+          ad: "E***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 00",
+          birim_id: 13,
+        },
+        {
+          p_id: 149,
+          ad: "H***** T*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 65 01",
+          birim_id: 13,
+        },
+        {
+          p_id: 150,
+          ad: "M***** G*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 65 00",
+          birim_id: 13,
+        },
+        {
+          p_id: 151,
+          ad: "M***** E*****",
+          unvan: "ÖĞRETMEN",
+          tel: "",
+          birim_id: 13,
+        },
+        {
+          p_id: 152,
+          ad: "N***** S*****",
+          unvan: "MEMUR",
+          tel: "",
+          birim_id: 13,
+        },
+        {
+          p_id: 153,
+          ad: "İ***** H*****",
+          unvan: "MÜDÜR YARDIMCISI",
+          tel: "0276 280 64 00",
+          birim_id: 14,
+        },
+        {
+          p_id: 154,
+          ad: "M***** B*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 03",
+          birim_id: 14,
+        },
+        {
+          p_id: 155,
+          ad: "H***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 04",
+          birim_id: 14,
+        },
+        {
+          p_id: 156,
+          ad: "M***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 05",
+          birim_id: 14,
+        },
+        {
+          p_id: 157,
+          ad: "S***** T*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 02",
+          birim_id: 14,
+        },
+        {
+          p_id: 158,
+          ad: "M***** C*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 15,
+        },
+        {
+          p_id: 159,
+          ad: "B***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 07",
+          birim_id: 15,
+        },
+        {
+          p_id: 160,
+          ad: "A***** K*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 65 06",
+          birim_id: 15,
+        },
+        {
+          p_id: 161,
+          ad: "M***** E*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 65 08",
+          birim_id: 15,
+        },
+        {
+          p_id: 162,
+          ad: "A***** K*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 17,
+        },
+        {
+          p_id: 163,
+          ad: "D***** T*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 12",
+          birim_id: 17,
+        },
+        {
+          p_id: 164,
+          ad: "E***** U*****",
+          unvan: "ŞEF",
+          tel: "0276 280 64 09",
+          birim_id: 17,
+        },
+        {
+          p_id: 165,
+          ad: "A***** E*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 11",
+          birim_id: 17,
+        },
+        {
+          p_id: 166,
+          ad: "Ö***** F***** Y*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 11",
+          birim_id: 17,
+        },
+        {
+          p_id: 167,
+          ad: "R***** S*****",
+          unvan: "SÜREKLİ İŞÇİ",
+          tel: "0276 280 65 10",
+          birim_id: 17,
+        },
+        {
+          p_id: 168,
+          ad: "A***** A*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 18,
+        },
+        {
+          p_id: 169,
+          ad: "M***** Ö*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 14",
+          birim_id: 18,
+        },
+        {
+          p_id: 170,
+          ad: "M***** Ş*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 15",
+          birim_id: 18,
+        },
+        {
+          p_id: 171,
+          ad: "H***** Y*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 65 17",
+          birim_id: 18,
+        },
+        {
+          p_id: 172,
+          ad: "R***** T*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 65 21",
+          birim_id: 18,
+        },
+        {
+          p_id: 173,
+          ad: "A***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 19",
+          birim_id: 18,
+        },
+        {
+          p_id: 174,
+          ad: "H***** P*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 16",
+          birim_id: 18,
+        },
+        {
+          p_id: 175,
+          ad: "K***** K*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 18",
+          birim_id: 18,
+        },
+        {
+          p_id: 176,
+          ad: "A***** D*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 22",
+          birim_id: 18,
+        },
+        {
+          p_id: 177,
+          ad: "C***** Ç*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 20",
+          birim_id: 18,
+        },
+        {
+          p_id: 178,
+          ad: "C***** Z*****",
+          unvan: "SÜREKLİ İŞÇİ",
+          tel: "0276 280 65 20",
+          birim_id: 18,
+        },
+        {
+          p_id: 179,
+          ad: "E***** M***** A*****",
+          unvan: "SİVİL SAVUNMA UZMANI",
+          tel: "0276 280 65 38",
+          birim_id: 19,
+        },
+        {
+          p_id: 180,
+          ad: "M***** S*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 34",
+          birim_id: 19,
+        },
+        {
+          p_id: 181,
+          ad: "H***** K*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 20,
+        },
+        {
+          p_id: 182,
+          ad: "A***** Y*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 25",
+          birim_id: 20,
+        },
+        {
+          p_id: 183,
+          ad: "E***** A*****",
+          unvan: "VHKİ",
+          tel: "0276 280 64 36",
+          birim_id: 20,
+        },
+        {
+          p_id: 184,
+          ad: "İ***** Z*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 24",
+          birim_id: 20,
+        },
+        {
+          p_id: 185,
+          ad: "İ***** D*****",
+          unvan: "BİLGİSAYAR İŞLETMENİ",
+          tel: "0276 280 64 36",
+          birim_id: 20,
+        },
+        {
+          p_id: 186,
+          ad: "M***** Ç*****",
+          unvan: "TEKNİSYEN",
+          tel: "0276 280 65 26",
+          birim_id: 20,
+        },
+        {
+          p_id: 187,
+          ad: "C***** U*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 29",
+          birim_id: 20,
+        },
+        {
+          p_id: 188,
+          ad: "M***** Y*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 28",
+          birim_id: 20,
+        },
+        {
+          p_id: 189,
+          ad: "D***** N***** Ö*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 27",
+          birim_id: 20,
+        },
+        {
+          p_id: 190,
+          ad: "S***** S***** G*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 64 16",
+          birim_id: 20,
+        },
+        {
+          p_id: 191,
+          ad: "S***** D***** A*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 42",
+          birim_id: 20,
+        },
+        {
+          p_id: 192,
+          ad: "Ş***** Y*****",
+          unvan: "ÖĞRETMEN",
+          tel: "0276 280 65 27",
+          birim_id: 20,
+        },
+        {
+          p_id: 193,
+          ad: "M***** C*****",
+          unvan: "ŞUBE MÜDÜRÜ",
+          tel: "0276 280 64 00",
+          birim_id: 21,
+        },
+        {
+          p_id: 194,
+          ad: "R***** A*****",
+          unvan: "ŞEF",
+          tel: "0276 280 65 30",
+          birim_id: 21,
+        },
+        {
+          p_id: 195,
+          ad: "B***** K*****",
+          unvan: "MEMUR",
+          tel: "0276 280 65 31",
+          birim_id: 21,
+        },
+        {
+          p_id: 196,
+          ad: "E***** S*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 32",
+          birim_id: 21,
+        },
+        {
+          p_id: 197,
+          ad: "M***** Ç*****",
+          unvan: "VHKİ",
+          tel: "0276 280 65 32",
+          birim_id: 21,
+        },
+      ];
+
+      window.onload = function () {
+        const birimSelect = document.getElementById("birimSelect");
+        birimler.forEach((birim) => {
+          const option = document.createElement("option");
+          option.value = birim.id;
+          option.textContent = birim.birim_adi;
+          birimSelect.appendChild(option);
+        });
+      };
+
+      function loadExcel() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".xlsx, .xls, .ods";
+
+        input.onchange = (event) => {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            personeller.push(...XLSX.utils.sheet_to_json(worksheet));
+
+            document.getElementById("uploadButton").style.display = "none";
+          };
+          reader.readAsArrayBuffer(file);
+        };
+
+        input.click();
+      }
+
+      function getPersonelByBirim() {
+        const selectedBirimId = document.getElementById("birimSelect").value;
+        const personelContainer = document.getElementById("personelContainer");
+        personelContainer.innerHTML = "";
+
+        if (selectedBirimId) {
+          const filteredPersoneller = personeller.filter(
+            (p) => p.birim_id == selectedBirimId
+          );
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const tbody = document.createElement("tbody");
+
+          const headers = ["Adı", "Unvan", "Telefon"];
+          const headerRow = document.createElement("tr");
+          headers.forEach((headerText) => {
+            const th = document.createElement("th");
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          filteredPersoneller.forEach((personel) => {
+            const row = document.createElement("tr");
+            const cells = [personel.ad, personel.unvan, personel.tel];
+            cells.forEach((cellText) => {
+              const td = document.createElement("td");
+              td.textContent = cellText;
+              row.appendChild(td);
+            });
+            tbody.appendChild(row);
+          });
+
+          table.appendChild(tbody);
+          personelContainer.appendChild(table);
+          document.getElementById("uploadButton").style.display =
+            "inline-block";
+        } else {
+          const message = document.createElement("p");
+          message.textContent = "Lütfen bir birim seçiniz.";
+          personelContainer.appendChild(message);
+          document.getElementById("uploadButton").style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
